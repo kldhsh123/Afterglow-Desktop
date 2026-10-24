@@ -5,7 +5,8 @@
 <h1 align="center">Afterglow Desktop</h1>
 
 <p align="center">
-  <strong>Let the warmth of past conversations continue into companionship.</strong>
+  <strong>Let the warmth of past conversations continue into companionship.</strong><br />
+  通过真实聊天记录构建可检索的关系记忆、角色设定与表达风格。结合 RAG、角色上下文和兼容 OpenAI 的 API，让 AI 在新的对话中延续熟悉的交流方式。
   <br />
   The desktop app for Afterglow.
 </p>
