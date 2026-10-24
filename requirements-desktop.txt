@@ -1,0 +1,6 @@
+# Additional dependencies bundled with the portable runtime, not installed by users.
+httpx==0.28.1
+websockets==15.0.1
+cryptography==46.0.7
+
+regex==2024.11.6

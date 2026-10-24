@@ -1,0 +1,58 @@
+"""Prepare release metadata from actual local artifacts. This does not publish."""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import re
+import shutil
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from desktop_host.versioning import desktop_version
+
+
+def digest(path):
+    value = hashlib.sha256()
+    with path.open('rb') as stream:
+        while block := stream.read(1024 * 1024): value.update(block)
+    return value.hexdigest()
+
+
+def prepare(tag, destination):
+    if not re.fullmatch(r'[A-Za-z0-9._-]{1,100}', tag):
+        raise ValueError('Use a plain GitHub release tag')
+    metadata = json.loads((ROOT / 'version.json').read_text())
+    version = desktop_version(metadata)
+    if tag != 'v' + version:
+        raise ValueError('Release tag must match the desktop version: v' + version)
+    installer = ROOT / 'artifacts' / ('Afterglow-' + version + '-windows-x64-setup.exe')
+    built = json.loads(installer.with_suffix('.exe.build.json').read_text())
+    if built['version'] != version or built['sha256'] != digest(installer):
+        raise ValueError('The installer checksum or version does not match the build record')
+    catalog = json.loads((ROOT / 'src-tauri/resources/catalog.json').read_text())
+    core = next(entry for entry in catalog['components'] if entry['id'] == 'core')
+    package = (ROOT / 'src-tauri/resources' / core['bundled']).resolve()
+    if (ROOT / 'src-tauri/resources').resolve() not in package.parents or digest(package) != core['sha256']:
+        raise ValueError('The bundled core checksum does not match')
+    destination.mkdir(parents=True, exist_ok=False)
+    base = 'https://github.com/kldhsh123/Afterglow-Desktop/releases/download/' + tag + '/'
+    release = {'format': 1, 'desktop': {'version': version, 'url': base + installer.name, 'sha256': built['sha256']},
+               'components': [{'id': 'core', 'version': core['version'], 'url': base + package.name, 'sha256': core['sha256']}]}
+    for source in (installer, installer.with_suffix('.exe.sha256'), package):
+        shutil.copy2(source, destination / source.name)
+    (destination / 'catalog.json').write_text(json.dumps(release, indent=2) + '\n')
+    (destination / 'PUBLISHING.txt').write_text(
+        'These are local release assets, not a published release.\n'
+        'After review and authorization, publish the installer, SHA-256 file, core ZIP and catalog.json\n'
+        'together on the Afterglow-Desktop GitHub release with tag ' + tag + '.\n'
+        'Only configure the catalog URL after the uploaded assets are accessible.\n')
+    return destination
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--tag', required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    args = parser.parse_args()
+    print(prepare(args.tag, args.output.resolve()))

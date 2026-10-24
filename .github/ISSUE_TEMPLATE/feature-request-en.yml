@@ -1,0 +1,32 @@
+# Adapted from AstrBot issue templates; customized for Afterglow Desktop.
+# https://github.com/AstrBotDevs/AstrBot/tree/master/.github/ISSUE_TEMPLATE
+name: "Feature request (English)"
+description: "Help improve Afterglow Desktop."
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: "Please search existing issues first. This repository is for the desktop app; link upstream core issues when relevant. Never share credentials or private chat records."
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "Suggested change"
+      description: "Describe the feature and the problem it would solve."
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: "Use case and alternatives"
+      description: "How would you use it? What have you tried?"
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Before submitting"
+      options:
+        - label: "I searched existing issues and removed sensitive information from this report."
+          required: true
+        - label: "I would like to help with a PR (optional)."

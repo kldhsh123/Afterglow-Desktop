@@ -1,0 +1,45 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Main window access to native file dialogs, analysis folders, and HTTPS links.",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-is-maximized",
+    "core:window:allow-start-dragging",
+    "core:window:allow-close",
+    "core:window:allow-destroy",
+    "dialog:allow-open",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [{ "path": "**/profiles/*/core/data/analysis" }]
+    },
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://github.com/kldhsh123/*"
+        },
+        {
+          "url": "https://platform.deepseek.com/*"
+        },
+        {
+          "url": "https://console.xfyun.cn/*"
+        },
+        {
+          "url": "https://maas.xfyun.cn/modelSquare/base/*"
+        },
+        {
+          "url": "https://open.bigmodel.cn/*"
+        },
+        {
+          "url": "https://q.qq.com/*"
+        }
+      ]
+    }
+  ]
+}

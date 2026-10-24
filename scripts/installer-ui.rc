@@ -1,0 +1,27 @@
+// Original Afterglow resources; dimensions are dialog units for Windows DPI.
+LANGUAGE 9, 1
+105 DIALOGEX 0, 0, 560, 366
+STYLE 0x80CA0840
+CAPTION "Afterglow"
+FONT 9, "Segoe UI", 400, 0, 1
+BEGIN
+    CONTROL "", 1018, "Static", 0x40020004, 0, 0, 560, 312
+    CONTROL "", 1028, "Static", 0x50000000, 34, 334, 284, 12
+    CONTROL "", 3, "Button", 0x40010000, 272, 324, 70, 28
+    CONTROL "", 2, "Button", 0x50010000, 356, 324, 74, 28
+    CONTROL "", 1, "Button", 0x50010001, 440, 324, 86, 28
+END
+106 DIALOGEX 0, 0, 560, 312
+STYLE 0x40000440
+FONT 9, "Segoe UI", 400, 0, 1
+BEGIN
+    LTEXT "", 8000, 204, 26, 322, 20
+    CONTROL "", 1031, "Static", 0x5000000E, 0, 0, 168, 312
+    LTEXT "", 8001, 204, 82, 322, 42
+    LTEXT "", 8002, 204, 140, 322, 48
+    CONTROL "", 1004, "msctls_progress32", 0x50000000, 204, 211, 322, 5
+    LTEXT "", 8003, 204, 235, 322, 52
+    CONTROL "", 1006, "Static", 0x40000080, 204, 292, 322, 12
+    CONTROL "", 1016, "SysListView32", 0x40008405, 0, 0, 1, 1
+    CONTROL "", 1027, "Button", 0x40000000, 0, 0, 1, 1
+END

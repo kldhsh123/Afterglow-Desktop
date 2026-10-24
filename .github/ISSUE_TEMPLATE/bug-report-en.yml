@@ -1,0 +1,53 @@
+# Adapted from AstrBot issue templates; customized for Afterglow Desktop.
+# https://github.com/AstrBotDevs/AstrBot/tree/master/.github/ISSUE_TEMPLATE
+name: "Bug report (English)"
+description: "Help improve Afterglow Desktop."
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Please search existing issues first. This repository is for the desktop app; link upstream core issues when relevant. Never share credentials or private chat records."
+  - type: textarea
+    id: problem
+    attributes:
+      label: "What happened?"
+      description: "Describe the actual and expected behavior."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: "Steps to reproduce"
+      description: "List the steps and use synthetic examples if needed."
+    validations:
+      required: true
+  - type: textarea
+    id: versions
+    attributes:
+      label: "Desktop and core versions"
+      description: "Copy both versions from Components & Updates. If the core is not installed, say so."
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Windows version and installation type"
+      description: "For example: Windows 11 x64, installer or portable; custom install path if relevant."
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs or screenshots (optional)"
+      description: "Attach relevant, sanitized diagnostics. Remove keys, tokens, personal data and private chat content. Do not upload a full chat export."
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Before submitting"
+      options:
+        - label: "I searched existing issues and removed sensitive information from this report."
+          required: true
+        - label: "I would like to help with a PR (optional)."

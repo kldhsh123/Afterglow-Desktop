@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "components": [
+    {
+      "id": "core",
+      "version": "0.4.1",
+      "sha256": "d34cee1f9b7b35abb0faab55412e3fb08558420419a9e17cf96a9eb2e767c9f1",
+      "bundled": "packages/afterglow-core-0.4.1-windows-x64.zip"
+    }
+  ]
+}
