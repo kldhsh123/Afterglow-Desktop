@@ -48,7 +48,6 @@ try:
     from .core_updates import prepare_source_update, prune_core_versions
     from .catalog import fetch_catalog, validate_catalog, release_url
     from .updates import stage_installer, version_key
-    from .downloads import download_verified
     from .credentials import SecretStore
     from .repository_updates import RepositoryChecks
     from .versioning import desktop_version
@@ -73,7 +72,6 @@ except ImportError:
     from core_updates import prepare_source_update, prune_core_versions
     from catalog import fetch_catalog, validate_catalog, release_url
     from updates import stage_installer, version_key
-    from downloads import download_verified
     from credentials import SecretStore
     from repository_updates import RepositoryChecks
     from versioning import desktop_version
@@ -513,39 +511,26 @@ class Manager:
             raise ValueError(tr('host.stop_the_core_and_plugins_before_changing_component'))
         staging = self.root / "staging" / uuid.uuid4().hex
         staging.parent.mkdir(parents=True, exist_ok=True)
-        temporary = None
         archive = Path(args["path"]) if args.get("path") else None
         try:
             if archive is None:
-                # A slim installation must learn about published runtime assets
-                # before the first download. An offline local catalog remains a
-                # fallback; downloading still requires its actual SHA-256.
-                update_url = self.catalog.get('updateUrl')
-                if update_url and not any(c.get('bundled') for c in self.catalog.get('components', [])):
-                    try:
-                        fresh = fetch_catalog(update_url, root=self.root)
-                        atomic_json(self.root / 'catalog.json', fresh)
-                        self.catalog = fresh
-                    except (OSError, ValueError):
-                        pass
-                entry = next((c for c in self.catalog.get("components", []) if c["id"] == cid), None)
+                # Initial installation and repair use the full installer's
+                # verified local core, even after loading an older online
+                # catalog. Core source updates use the upstream repository.
+                entry = next((c for c in self.bundled_catalog.get("components", [])
+                              if c["id"] == cid and c.get("bundled")), None)
                 if not entry:
                     raise ValueError(tr('host.windows_runtime_packages_have_not_been_published_import'))
-                bundled = entry.get("bundled")
-                if bundled:
-                    relative = safe_member(bundled)
-                    archive = self.catalog_path.parent.joinpath(*relative.parts).resolve()
-                    if self.catalog_path.parent not in archive.parents or not archive.is_file():
-                        raise ValueError(tr('host.choose_a_valid_zip_component_package'))
-                    hasher = hashlib.sha256()
-                    with archive.open("rb") as stream:
-                        while block := stream.read(1024 * 1024):
-                            hasher.update(block)
-                    if hasher.hexdigest() != entry.get("sha256"):
-                        raise ValueError(tr('host.component_download_verification_failed'))
-                else:
-                    archive = self._download_component(entry)
-                    temporary = archive
+                relative = safe_member(entry["bundled"])
+                archive = self.catalog_path.parent.joinpath(*relative.parts).resolve()
+                if self.catalog_path.parent not in archive.parents or not archive.is_file():
+                    raise ValueError(tr('host.windows_runtime_packages_have_not_been_published_import'))
+                hasher = hashlib.sha256()
+                with archive.open("rb") as stream:
+                    while block := stream.read(1024 * 1024):
+                        hasher.update(block)
+                if hasher.hexdigest() != entry.get("sha256"):
+                    raise ValueError(tr('host.component_download_verification_failed'))
             if not archive.is_file():
                 raise ValueError(tr('host.choose_a_valid_zip_component_package'))
             manifest = extract_package(archive, staging, cid)
@@ -561,8 +546,6 @@ class Manager:
         finally:
             if staging.exists():
                 shutil.rmtree(staging)
-            if temporary:
-                temporary.unlink(missing_ok=True)
 
     def update_core(self, args):
         installed = read_json(self.root / 'installed.json', {})
@@ -640,18 +623,6 @@ class Manager:
             self._core_cleanup_checked = token
         finally:
             lock.release()
-
-    def _download_component(self, entry):
-        from urllib.parse import urlparse
-        if not release_url(entry.get('url')):
-            raise ValueError(tr('host.the_component_source_is_outside_the_builtin_allowlist'))
-        temporary = self.root / "staging" / (uuid.uuid4().hex + ".zip")
-        try:
-            download_verified(entry['url'], temporary, entry['sha256'], 2 * 1024**3)
-        except Exception:
-            temporary.unlink(missing_ok=True)
-            raise
-        return temporary
 
     def core_request(self, path, payload=None, method=None, timeout=150):
         proc = self.children.get("core")

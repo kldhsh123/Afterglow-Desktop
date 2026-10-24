@@ -53,6 +53,8 @@ src-tauri/resources/runtime-catalog.json
 
 这些二进制资源不会提交 Git，刚克隆仓库时需要另行准备。准备方式见 `python scripts/prepare_windows.py --help`：该脚本需要在 Windows CPython 3.12 x64 中运行，提供已独立核对 SHA-256 的官方嵌入式 Python ZIP 和核心源码路径。它会准备运行环境和依赖，不负责发布桌面版。
 
+核心 ZIP 仅作为安装包和便携版内部资源保留，首次安装或补装直接使用本地包，**不需要单独上传到 GitHub Release**。
+
 已有经过验证的核心运行包、仅替换核心源码且依赖声明不变时，可使用 `scripts/refresh_bundled_core.py --help` 查看资源更新方式；它会检查依赖能否复用，不能复用时需要重新准备运行环境。
 
 ## 3. 手动构建 Windows 安装包
@@ -91,19 +93,20 @@ python3 scripts/release_catalog.py \
   --output artifacts/release-v0.1.0
 ```
 
-输出目录需要尚不存在。脚本核对安装包的构建记录及 SHA-256、核心包 SHA-256，并生成以下附件：
+输出目录需要尚不存在。脚本核对安装包的构建记录及 SHA-256，并生成以下附件：
 
 | 文件 | 用途 |
 | --- | --- |
 | `Afterglow-0.1.0-windows-x64-setup.exe` | 用户安装及桌面端更新 |
 | `Afterglow-0.1.0-windows-x64-setup.exe.sha256` | 安装包校验值 |
-| `afterglow-core-0.4.1-windows-x64.zip` | 应用更新清单引用的已验证核心运行包 |
-| `catalog.json` | 桌面端与核心的版本、下载地址及 SHA-256 |
+| `catalog.json` | 桌面端版本、安装包下载地址及 SHA-256 |
 | `PUBLISHING.txt` | 本地上传提示，可不上传 |
 
 **发布用的 `catalog.json` 是此步骤的输出，不是直接复制 `src-tauri/resources/catalog.json` 或 `runtime-catalog.json`。** 源码中的清单用于安装时的内置资源；发布清单还包含 `desktop` 字段，应用才能下载新的桌面安装包。
 
-整理完成后不要再改动 EXE 或核心 ZIP；如需重新打包，请重新生成构建记录、校验值和发布清单。
+发布清单保留 `"components": []` 以兼容已有客户端，不提供独立核心 ZIP 的下载地址。无需上传核心 ZIP，也无需在每次桌面发布时重复分发该附件。
+
+整理完成后不要再改动 EXE；如需重新打包，请重新生成构建记录、校验值和发布清单。已有旧版发布附件目录时，请先移到备份位置，再生成新目录，避免误上传旧的核心 ZIP 或清单。
 
 ## 5. 上传 GitHub Release
 
@@ -111,7 +114,7 @@ python3 scripts/release_catalog.py \
 
 1. 先将此次源代码和同步后的版本文件提交、推送到仓库；标签必须对应实际构建所用的提交。
 2. 标签填写 `v0.1.0`，标题可用 `Afterglow Desktop v0.1.0`。
-3. 写明更新内容，并上传上表前四个附件；保持文件名不变。
+3. 写明更新内容，并上传上表前三个附件（安装包、校验文件、`catalog.json`）；保持文件名不变。
 4. 作为正式版发布，不勾选预发布，并将它设为最新正式发布（Latest）。
 5. 核对附件、版本和提交后，再发布 Release。
 
@@ -132,7 +135,7 @@ https://github.com/kldhsh123/Afterglow-Desktop/releases/latest/download/catalog.
 需要区别两种检查：
 
 - **桌面端**：仓库 `version.json` 用于发现新版本；实际下载安装必须有已发布的 `catalog.json`、安装包和正确校验值。仅改仓库版本号不等于发布完成。
-- **Afterglow 核心**：从原核心仓库的 `VERSION` 检查版本，并从原仓库获取源码更新；桌面发布附件中的核心运行包用于提供可验证的运行组件。无需为了单独更新核心而重新发布整个桌面程序。
+- **Afterglow 核心**：首次安装或补装使用桌面程序自带的核心资源；之后从原核心仓库的 `VERSION` 检查版本，并从原仓库获取源码更新。无需单独上传核心 ZIP，也无需为了单独更新核心而重新发布整个桌面程序。
 
 所有请求只直连 GitHub，不使用镜像。无法连接时会保留现有版本；不要在清单里填入镜像地址。
 

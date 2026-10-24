@@ -30,22 +30,21 @@ def prepare(tag, destination):
     built = json.loads(installer.with_suffix('.exe.build.json').read_text())
     if built['version'] != version or built['sha256'] != digest(installer):
         raise ValueError('The installer checksum or version does not match the build record')
-    catalog = json.loads((ROOT / 'src-tauri/resources/catalog.json').read_text())
-    core = next(entry for entry in catalog['components'] if entry['id'] == 'core')
-    package = (ROOT / 'src-tauri/resources' / core['bundled']).resolve()
-    if (ROOT / 'src-tauri/resources').resolve() not in package.parents or digest(package) != core['sha256']:
-        raise ValueError('The bundled core checksum does not match')
     destination.mkdir(parents=True, exist_ok=False)
     base = 'https://github.com/kldhsh123/Afterglow-Desktop/releases/download/' + tag + '/'
+    # The full installer already includes the verified core and dependencies.
+    # Keep an empty component list for compatibility with existing clients;
+    # they restore their bundled catalog instead of downloading a core ZIP.
     release = {'format': 1, 'desktop': {'version': version, 'url': base + installer.name, 'sha256': built['sha256']},
-               'components': [{'id': 'core', 'version': core['version'], 'url': base + package.name, 'sha256': core['sha256']}]}
-    for source in (installer, installer.with_suffix('.exe.sha256'), package):
+               'components': []}
+    for source in (installer, installer.with_suffix('.exe.sha256')):
         shutil.copy2(source, destination / source.name)
     (destination / 'catalog.json').write_text(json.dumps(release, indent=2) + '\n')
     (destination / 'PUBLISHING.txt').write_text(
         'These are local release assets, not a published release.\n'
-        'After review and authorization, publish the installer, SHA-256 file, core ZIP and catalog.json\n'
+        'After review and authorization, publish the installer, SHA-256 file and catalog.json\n'
         'together on the Afterglow-Desktop GitHub release with tag ' + tag + '.\n'
+        'The core is included in the installer; do not upload a separate core ZIP.\n'
         'Only configure the catalog URL after the uploaded assets are accessible.\n')
     return destination
 

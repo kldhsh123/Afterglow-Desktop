@@ -82,7 +82,8 @@ class ReleaseVersionTests(unittest.TestCase):
             self.assertIn('name = "afterglow-desktop"\nversion = "0.1.0"', (root / 'src-tauri/Cargo.lock').read_text())
             self.assertIn('version = "0.1.0"', (root / 'src-tauri/Cargo.toml').read_text())
             catalog = json.loads((root / 'src-tauri/resources/runtime-catalog.json').read_text())
-            self.assertIn('/v0.1.0/', catalog['components'][0]['url'])
+            self.assertTrue(catalog['components'][0]['bundled'].startswith('packages/'))
+            self.assertNotIn('url', catalog['components'][0])
             bumped = run('--bump')
             self.assertEqual(bumped.returncode, 0, bumped.stderr)
             self.assertEqual(bumped.stdout.strip(), '0.1.1')
@@ -92,7 +93,7 @@ class ReleaseVersionTests(unittest.TestCase):
                 self.assertEqual(json.loads((root / name).read_text())['version'], '0.1.1')
             self.assertIn('name = "afterglow-desktop"\nversion = "0.1.1"', (root / 'src-tauri/Cargo.lock').read_text())
             catalog = json.loads((root / 'src-tauri/resources/runtime-catalog.json').read_text())
-            self.assertIn('/v0.1.1/', catalog['components'][0]['url'])
+            self.assertNotIn('url', catalog['components'][0])
             again = run('--bump')
             self.assertEqual(again.returncode, 0, again.stderr)
             self.assertEqual(again.stdout.strip(), '0.1.2')
@@ -109,7 +110,7 @@ class ReleaseCatalogTests(unittest.TestCase):
                 prepare('v0.1.1', output)
             self.assertFalse(output.exists())
 
-    def test_generated_catalog_refers_to_the_uploaded_stable_assets(self):
+    def test_generated_catalog_only_requires_the_desktop_assets(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'version.json').write_text(json.dumps({'baseVersion': '0.1.0', 'internalBuild': 16, 'channel': 'stable'}))
@@ -119,13 +120,8 @@ class ReleaseCatalogTests(unittest.TestCase):
             checksum = hashlib.sha256(installer.read_bytes()).hexdigest()
             installer.with_suffix('.exe.build.json').write_text(json.dumps({'version': '0.1.0', 'sha256': checksum}))
             installer.with_suffix('.exe.sha256').write_text(checksum + '  ' + installer.name + '\n')
-            resources = root / 'src-tauri/resources'
-            package = resources / 'packages/afterglow-core-0.4.1-windows-x64.zip'
-            package.parent.mkdir(parents=True)
-            package.write_bytes(b'core fixture')
-            core = {'id': 'core', 'version': '0.4.1', 'bundled': 'packages/' + package.name,
-                    'sha256': hashlib.sha256(package.read_bytes()).hexdigest()}
-            (resources / 'catalog.json').write_text(json.dumps({'format': 1, 'components': [core]}))
+            # Release preparation needs no separate core ZIP or source catalog:
+            # the verified full installer already contains the runtime package.
             output = root / 'release'
             with patch('scripts.release_catalog.ROOT', root):
                 prepare('v0.1.0', output)
@@ -134,6 +130,27 @@ class ReleaseCatalogTests(unittest.TestCase):
             self.assertEqual(catalog['desktop']['sha256'], checksum)
             self.assertEqual(catalog['desktop']['url'],
                              'https://github.com/kldhsh123/Afterglow-Desktop/releases/download/v0.1.0/' + installer.name)
-            self.assertEqual(catalog['components'][0]['version'], '0.4.1')
+            self.assertEqual(catalog['components'], [])
             self.assertEqual({file.name for file in output.iterdir()},
-                             {installer.name, installer.name + '.sha256', package.name, 'catalog.json', 'PUBLISHING.txt'})
+                             {installer.name, installer.name + '.sha256', 'catalog.json', 'PUBLISHING.txt'})
+            self.assertNotIn('.zip', (output / 'catalog.json').read_text())
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is not installed')
+    def test_runtime_catalog_only_keeps_verified_local_core_references(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            resources = root / 'src-tauri/resources'
+            resources.mkdir(parents=True)
+            entry = {'id': 'core', 'version': '0.4.1', 'sha256': 'a' * 64, 'bundled': 'packages/core.zip',
+                     'url': 'https://github.com/kldhsh123/Afterglow-Desktop/releases/download/v0.1.0/core.zip'}
+            (resources / 'catalog.json').write_text(json.dumps({'format': 1, 'components': [entry]}))
+            module = (ROOT / 'scripts/runtime_catalog.mjs').as_uri()
+            script = ('import { writeRuntimeCatalog } from ' + json.dumps(module) + ';'
+                      'writeRuntimeCatalog(process.argv[1]);')
+            result = subprocess.run(['node', '--input-type=module', '-e', script, str(root)],
+                                    capture_output=True, text=True, timeout=15)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            catalog = json.loads((resources / 'runtime-catalog.json').read_text())
+            self.assertEqual(catalog['components'], [{key: value for key, value in entry.items() if key != 'url'}])
+            self.assertEqual(catalog['updateUrl'],
+                             'https://github.com/kldhsh123/Afterglow-Desktop/releases/latest/download/catalog.json')
