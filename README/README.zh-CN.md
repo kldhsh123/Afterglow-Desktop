@@ -39,7 +39,7 @@
 
 **Afterglow Desktop 是 Afterglow 的 Windows 桌面端。** 程序自带原版核心和便携 Python，将配置向导、模型连接、聊天记录导入、聊天与分析整合到一个界面。不同安装目录可以分别保存配置和数据。
 
-![Afterglow Desktop 界面演示](../assets/b80c1db0fa9a34e75f07e49b21362e67.png)
+![Afterglow Desktop 界面演示](../assets/main.jpg)
 
 ## 功能
 
@@ -116,3 +116,7 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 [AGPL-3.0-or-later](../LICENSE)。
 
 第三方组件保留各自许可证。贡献适用[贡献协议与代码所有权条款](CONTRIBUTING.zh-CN.md#贡献协议与代码所有权)。
+
+## 友情链接
+
+[Linux.do](https://linux.do/)

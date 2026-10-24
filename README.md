@@ -39,7 +39,7 @@ It cleans, splits and vectorizes real chats, then combines persona, circadian pa
 
 **Afterglow Desktop is the Windows desktop app for Afterglow.** It bundles the original core and portable Python, bringing guided configuration, model connections, chat-history import, chat and analysis into one interface. Each installation can keep its own configuration and data.
 
-![Afterglow Desktop interface](assets/b80c1db0fa9a34e75f07e49b21362e67.png)
+![Afterglow Desktop interface](assets/main.jpg)
 
 ## Features
 
@@ -116,3 +116,7 @@ To run the full desktop application, use `npm run desktop:dev` in a configured W
 [AGPL-3.0-or-later](LICENSE).
 
 Third-party components retain their respective licenses. Contributions are subject to the [contribution agreement and code ownership terms](CONTRIBUTING.md#contribution-agreement-and-code-ownership).
+
+## Links
+
+[Linux.do](https://linux.do/)
